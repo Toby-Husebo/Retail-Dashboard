@@ -1,18 +1,16 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
+  const [error, setError] = useState(false)
   const [loading, setLoading] = useState(false)
-  const router = useRouter()
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
-    setError('')
+    setError(false)
     try {
       const res = await fetch('/api/auth', {
         method: 'POST',
@@ -22,51 +20,52 @@ export default function LoginPage() {
       if (res.ok) {
         window.location.href = '/'
       } else {
-        setError('Incorrect password. Please try again.')
+        setError(true)
+        setLoading(false)
       }
     } catch {
-      setError('Something went wrong.')
-    } finally {
+      setError(true)
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="bg-white rounded-2xl shadow-md border border-gray-100 w-full max-w-sm p-8">
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-teal-50 mb-4">
-            <svg className="w-6 h-6 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h1 className="text-xl font-bold text-gray-900">Retail Insights Hub</h1>
-          <p className="text-sm text-gray-500 mt-1">Enter your password to continue</p>
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-xs space-y-8">
+        {/* Brand */}
+        <div className="text-center">
+          <p className="text-xs font-semibold tracking-[0.2em] text-teal-600 uppercase mb-2">Lemme</p>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">Retail Insights</h1>
+          <p className="text-sm text-gray-400 mt-1">Internal team access</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
-            />
-          </div>
-
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-3">
+          <input
+            type="password"
+            value={password}
+            onChange={e => { setPassword(e.target.value); setError(false) }}
+            placeholder="Password"
+            required
+            autoFocus
+            className={`w-full px-4 py-3 rounded-xl border text-sm text-gray-900 placeholder-gray-300 focus:outline-none focus:ring-2 focus:ring-teal-500 transition-all ${
+              error ? 'border-red-300 bg-red-50' : 'border-gray-200 bg-gray-50'
+            }`}
+          />
           {error && (
-            <p className="text-sm text-red-500 bg-red-50 px-3 py-2 rounded-lg">{error}</p>
+            <p className="text-xs text-red-500 text-center">Incorrect password — try again</p>
           )}
-
           <button
             type="submit"
-            disabled={loading}
-            className="w-full py-2.5 px-4 bg-teal-600 hover:bg-teal-700 text-white font-medium text-sm rounded-lg transition-colors disabled:opacity-60"
+            disabled={loading || !password}
+            className="w-full py-3 bg-teal-600 hover:bg-teal-700 disabled:opacity-40 text-white font-semibold text-sm rounded-xl transition-all"
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Signing in…
+              </span>
+            ) : 'Sign In'}
           </button>
         </form>
       </div>
