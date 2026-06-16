@@ -1,24 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Uses Vercel KV when KV_REST_API_URL is set, otherwise falls back to in-memory store (dev only)
-let memoryStore: Record<string, { weekLabel: string; content: string; savedAt: string }> = {};
+// Falls back to in-memory store when Upstash env vars are not set (dev only)
+const memoryStore: Record<string, { weekLabel: string; content: string; savedAt: string }> = {};
 
-async function getKV() {
-  if (process.env.KV_REST_API_URL && process.env.KV_REST_API_TOKEN) {
-    const { kv } = await import("@vercel/kv");
-    return kv;
+async function getRedis() {
+  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const { Redis } = await import("@upstash/redis");
+    return new Redis({
+      url: process.env.UPSTASH_REDIS_REST_URL,
+      token: process.env.UPSTASH_REDIS_REST_TOKEN,
+    });
   }
   return null;
 }
 
 export async function GET() {
-  const kv = await getKV();
+  const redis = await getRedis();
 
-  if (kv) {
-    const keys = await kv.keys("report:*");
+  if (redis) {
+    const keys: string[] = await redis.keys("report:*");
     const reports: Record<string, unknown> = {};
     for (const key of keys) {
-      reports[key.replace("report:", "")] = await kv.get(key);
+      reports[key.replace("report:", "")] = await redis.get(key);
     }
     return NextResponse.json(reports);
   }
@@ -30,9 +33,9 @@ export async function POST(req: NextRequest) {
   const { weekKey, weekLabel, content } = await req.json();
   const record = { weekLabel, content, savedAt: new Date().toISOString() };
 
-  const kv = await getKV();
-  if (kv) {
-    await kv.set(`report:${weekKey}`, record);
+  const redis = await getRedis();
+  if (redis) {
+    await redis.set(`report:${weekKey}`, record);
   } else {
     memoryStore[weekKey] = record;
   }
