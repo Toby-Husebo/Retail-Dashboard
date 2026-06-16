@@ -1,33 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { jwtVerify } from "jose";
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { jwtVerify } from 'jose'
 
 const secret = new TextEncoder().encode(
-  process.env.AUTH_SECRET || "retail-dashboard-secret-change-me"
-);
+  process.env.AUTH_SECRET || 'default-secret-change-in-production'
+)
 
-const publicPaths = ["/login", "/api/auth"];
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
 
-export async function middleware(req: NextRequest) {
-  const { pathname } = req.nextUrl;
-
-  if (publicPaths.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
+  // Allow login and auth API routes
+  if (pathname.startsWith('/login') || pathname.startsWith('/api/auth')) {
+    return NextResponse.next()
   }
 
-  const token = req.cookies.get("auth_token")?.value;
+  const token = request.cookies.get('auth_token')?.value
 
   if (!token) {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 
   try {
-    await jwtVerify(token, secret);
-    return NextResponse.next();
+    await jwtVerify(token, secret)
+    return NextResponse.next()
   } catch {
-    return NextResponse.redirect(new URL("/login", req.url));
+    return NextResponse.redirect(new URL('/login', request.url))
   }
 }
 
 export const config = {
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|public).*)"],
-};
+  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+}

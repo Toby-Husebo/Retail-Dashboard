@@ -1,103 +1,83 @@
 export const retailers = [
   {
     name: "Target",
-    sales: 1897772,
-    salesWoW: -3.6,
-    salesYoY: 38.6,
-    unitSales: 69314,
-    unitSalesWoW: -3.8,
-    unitSalesYoY: 36.0,
-    digitalPenetration: 12.1,
-    avgRetailPrice: 27.39,
-    weeksOfSupply: 5.82,
-    returnsPercent: 1.4,
-    scanningLocations: 2018,
-    trackedLocations: 2008,
+    sales: 1900000,
+    salesWoW: 2.3,
+    salesYoY: 45.2,
+    unitSales: 52341,
+    unitSalesWoW: 1.8,
+    unitSalesYoY: 38.6,
+    avgRetailPrice: 36.29,
+    weeksOfSupply: 8.2,
+    returnsRate: 1.2,
+    scanningLocations: 1847,
   },
   {
     name: "Walmart",
-    sales: 670000,
-    salesWoW: -4.4,
-    salesYoY: null,
+    sales: 1364589,
+    salesWoW: -1.2,
+    salesYoY: 210.5,
     unitSales: 37599,
-    unitSalesWoW: -0.6,
-    unitSalesYoY: null,
-    digitalPenetration: 0.4,
-    avgRetailPrice: 17.83,
-    weeksOfSupply: 9.46,
-    returnsPercent: 0.7,
-    scanningLocations: 4045,
-    trackedLocations: 4538,
+    unitSalesWoW: -0.8,
+    unitSalesYoY: 195.3,
+    avgRetailPrice: 36.29,
+    weeksOfSupply: 10.4,
+    returnsRate: 0.9,
+    scanningLocations: 3421,
   },
   {
     name: "Ulta",
-    sales: 510000,
-    salesWoW: -3.6,
-    salesYoY: -3.6,
+    sales: 905578,
+    salesWoW: 3.7,
+    salesYoY: 28.4,
     unitSales: 24953,
-    unitSalesWoW: -2.7,
-    unitSalesYoY: 12.6,
-    digitalPenetration: 16.9,
-    avgRetailPrice: 20.43,
-    weeksOfSupply: 11.69,
-    returnsPercent: 0.0,
-    scanningLocations: 2,
-    trackedLocations: 1532,
+    unitSalesWoW: 4.1,
+    unitSalesYoY: 22.7,
+    avgRetailPrice: 36.29,
+    weeksOfSupply: 6.8,
+    returnsRate: 1.5,
+    scanningLocations: 1385,
   },
   {
     name: "iHerb",
-    sales: 192900,
-    salesWoW: -10.8,
-    salesYoY: -32.8,
+    sales: 235584,
+    salesWoW: 5.2,
+    salesYoY: 67.8,
     unitSales: 6490,
-    unitSalesWoW: -11.1,
-    unitSalesYoY: -30.4,
-    digitalPenetration: null,
-    avgRetailPrice: 29.73,
-    weeksOfSupply: null,
-    returnsPercent: 0.0,
-    scanningLocations: 1,
-    trackedLocations: null,
+    unitSalesWoW: 6.1,
+    unitSalesYoY: 58.3,
+    avgRetailPrice: 36.30,
+    weeksOfSupply: 12.1,
+    returnsRate: 0.4,
+    scanningLocations: 0,
   },
   {
     name: "Revolve",
-    sales: 81800,
-    salesWoW: -5.9,
-    salesYoY: -31.6,
-    unitSales: 2844,
-    unitSalesWoW: -5.8,
-    unitSalesYoY: -26.1,
-    digitalPenetration: null,
-    avgRetailPrice: 28.77,
-    weeksOfSupply: 15.73,
-    returnsPercent: 0.8,
-    scanningLocations: 1,
-    trackedLocations: 1,
+    sales: 148920,
+    salesWoW: -3.4,
+    salesYoY: 15.6,
+    unitSales: 4103,
+    unitSalesWoW: -2.9,
+    unitSalesYoY: 12.1,
+    avgRetailPrice: 36.30,
+    weeksOfSupply: 9.3,
+    returnsRate: 2.1,
+    scanningLocations: 0,
   },
   {
     name: "Meijer",
-    sales: 13400,
-    salesWoW: -5.4,
-    salesYoY: 36.4,
-    unitSales: 447,
-    unitSalesWoW: -5.7,
-    unitSalesYoY: 13.7,
-    digitalPenetration: null,
-    avgRetailPrice: 29.92,
-    weeksOfSupply: 18.68,
-    returnsPercent: 0.0,
-    scanningLocations: 207,
-    trackedLocations: 273,
+    sales: 198432,
+    salesWoW: 0.8,
+    salesYoY: 89.4,
+    unitSales: 5468,
+    unitSalesWoW: 1.2,
+    unitSalesYoY: 78.9,
+    avgRetailPrice: 36.29,
+    weeksOfSupply: 7.6,
+    returnsRate: 1.0,
+    scanningLocations: 258,
   },
-];
-
-export const kpiData = {
-  totalSales: 3363873,
-  totalSalesWoW: 1.4,
-  totalSalesYoY: 50.0,
-  totalUnitSales: 141647,
-  totalUnitSalesWoW: -3.2,
-};
+]
 
 export const products = [
   "Purr Gummies",
@@ -107,59 +87,150 @@ export const products = [
   "Play Gummies",
   "Tone Gummies",
   "Glow Gummies",
-];
+]
 
-const productColors = [
+export const productColors = [
   "#00897B",
   "#26A69A",
   "#4DB6AC",
   "#80CBC4",
-  "#F4A261",
-  "#E76F51",
-  "#264653",
-];
+  "#00695C",
+  "#00796B",
+  "#43A047",
+]
 
-export { productColors };
+export const retailerColors = [
+  "#00897B",
+  "#1565C0",
+  "#E53935",
+  "#FB8C00",
+  "#8E24AA",
+  "#00ACC1",
+]
 
-const retailerColors: Record<string, string> = {
-  Target: "#CC0000",
-  Walmart: "#0071CE",
-  Ulta: "#000000",
-  iHerb: "#5BA617",
-  Revolve: "#C8A951",
-  Meijer: "#E31837",
-};
+export const weeklyUnitSalesByDay = [
+  {
+    day: "Mon",
+    "Purr Gummies": 1240,
+    "Debloat Gummies": 980,
+    "Sleep Gummies": 870,
+    "Burn Gummies": 720,
+    "Play Gummies": 540,
+    "Tone Gummies": 460,
+    "Glow Gummies": 380,
+  },
+  {
+    day: "Tue",
+    "Purr Gummies": 1180,
+    "Debloat Gummies": 1050,
+    "Sleep Gummies": 920,
+    "Burn Gummies": 680,
+    "Play Gummies": 590,
+    "Tone Gummies": 490,
+    "Glow Gummies": 410,
+  },
+  {
+    day: "Wed",
+    "Purr Gummies": 1320,
+    "Debloat Gummies": 1100,
+    "Sleep Gummies": 890,
+    "Burn Gummies": 760,
+    "Play Gummies": 610,
+    "Tone Gummies": 520,
+    "Glow Gummies": 440,
+  },
+  {
+    day: "Thu",
+    "Purr Gummies": 1290,
+    "Debloat Gummies": 1020,
+    "Sleep Gummies": 950,
+    "Burn Gummies": 790,
+    "Play Gummies": 580,
+    "Tone Gummies": 500,
+    "Glow Gummies": 420,
+  },
+  {
+    day: "Fri",
+    "Purr Gummies": 1560,
+    "Debloat Gummies": 1280,
+    "Sleep Gummies": 1120,
+    "Burn Gummies": 940,
+    "Play Gummies": 720,
+    "Tone Gummies": 610,
+    "Glow Gummies": 530,
+  },
+  {
+    day: "Sat",
+    "Purr Gummies": 1820,
+    "Debloat Gummies": 1490,
+    "Sleep Gummies": 1350,
+    "Burn Gummies": 1120,
+    "Play Gummies": 860,
+    "Tone Gummies": 740,
+    "Glow Gummies": 650,
+  },
+  {
+    day: "Sun",
+    "Purr Gummies": 1680,
+    "Debloat Gummies": 1380,
+    "Sleep Gummies": 1240,
+    "Burn Gummies": 1050,
+    "Play Gummies": 790,
+    "Tone Gummies": 680,
+    "Glow Gummies": 590,
+  },
+]
 
-export { retailerColors };
+function generateWeeklyData() {
+  const data = []
+  const now = new Date()
+  for (let i = 51; i >= 0; i--) {
+    const weekDate = new Date(now)
+    weekDate.setDate(weekDate.getDate() - i * 7)
+    const weekLabel = `W${52 - i}`
+    const baseMultiplier = 1 + (52 - i) * 0.008
 
-// Last week daily unit sales by product (Jun 7–13)
-const days = ["Jun 7", "Jun 8", "Jun 9", "Jun 10", "Jun 11", "Jun 12", "Jun 13"];
-export const dailyUnitSales = days.map((day) => {
-  const entry: Record<string, number | string> = { day };
-  products.forEach((p, i) => {
-    entry[p] = Math.floor(1500 + Math.random() * 1000 - i * 100);
-  });
-  return entry;
-});
+    data.push({
+      week: weekLabel,
+      Target: Math.round(52341 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+      Walmart: Math.round(37599 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+      Ulta: Math.round(24953 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+      iHerb: Math.round(6490 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+      Revolve: Math.round(4103 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+      Meijer: Math.round(5468 * baseMultiplier * (0.85 + Math.random() * 0.3)),
+    })
+  }
+  return data
+}
 
-// Last 52 weeks unit sales by retailer
-export const weeklyUnitSales = Array.from({ length: 52 }, (_, i) => {
-  const date = new Date("2025-06-15");
-  date.setDate(date.getDate() + i * 7);
-  const label = date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  const entry: Record<string, number | string> = { week: label };
-  retailers.forEach((r) => {
-    entry[r.name] = Math.floor(r.unitSales * (0.7 + Math.random() * 0.6));
-  });
-  return entry;
-});
+export const last52WeeksData = generateWeeklyData()
 
-export const fiscalWeeks = Array.from({ length: 20 }, (_, i) => {
-  const d = new Date("2026-06-13");
-  d.setDate(d.getDate() - i * 7);
-  const end = d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  const start = new Date(d);
-  start.setDate(start.getDate() - 6);
-  const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-  return { label: `${startStr} – ${end}`, value: `fw-${2026}-${String(20 - i).padStart(2, "0")}` };
-});
+export const kpiData = {
+  totalSales: 3753103,
+  salesWoW: 1.4,
+  salesYoY: 50.2,
+  totalUnitSales: 130954,
+  unitSalesWoW: 1.1,
+}
+
+export function getCurrentFiscalWeek() {
+  const now = new Date()
+  const startOfYear = new Date(now.getFullYear(), 0, 1)
+  const weekNum = Math.ceil(
+    ((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7
+  )
+  return `FW${weekNum} ${now.getFullYear()}`
+}
+
+export function getFiscalWeeks() {
+  const weeks = []
+  const now = new Date()
+  const startOfYear = new Date(now.getFullYear(), 0, 1)
+  const currentWeek = Math.ceil(
+    ((now.getTime() - startOfYear.getTime()) / 86400000 + startOfYear.getDay() + 1) / 7
+  )
+  for (let i = currentWeek; i >= 1; i--) {
+    weeks.push(`FW${i} ${now.getFullYear()}`)
+  }
+  return weeks
+}

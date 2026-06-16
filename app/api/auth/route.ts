@@ -1,29 +1,23 @@
-import { NextRequest, NextResponse } from "next/server";
-import { signToken, isValidPassword } from "@/lib/auth";
+import { NextResponse } from 'next/server'
+import { signToken } from '@/lib/auth'
 
-export async function POST(req: NextRequest) {
-  const { password } = await req.json();
+export async function POST(request: Request) {
+  const { password } = await request.json()
+  const correctPassword = process.env.AUTH_PASSWORD || 'Lemme2026!'
 
-  if (!isValidPassword(password)) {
-    return NextResponse.json({ error: "Invalid password" }, { status: 401 });
+  if (password !== correctPassword) {
+    return NextResponse.json({ error: 'Invalid password' }, { status: 401 })
   }
 
-  const token = await signToken({ authenticated: true });
+  const token = await signToken({ authenticated: true })
 
-  const res = NextResponse.json({ success: true });
-  res.cookies.set("auth_token", token, {
+  const response = NextResponse.json({ success: true })
+  response.cookies.set('auth_token', token, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7,
-    path: "/",
-  });
+  })
 
-  return res;
-}
-
-export async function DELETE() {
-  const res = NextResponse.json({ success: true });
-  res.cookies.delete("auth_token");
-  return res;
+  return response
 }

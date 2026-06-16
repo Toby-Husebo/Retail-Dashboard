@@ -1,31 +1,26 @@
 interface KPICardProps {
-  label: string;
-  value: string;
-  change?: number | null;
-  changeLabel?: string;
-  secondary?: { value: string; change: number | null; label: string };
+  title: string
+  value: string
+  change?: number
+  changeLabel?: string
+  subtitle?: string
 }
 
-export default function KPICard({ label, value, change, changeLabel, secondary }: KPICardProps) {
+export default function KPICard({ title, value, change, changeLabel, subtitle }: KPICardProps) {
+  const isPositive = change !== undefined && change >= 0
+  const changeColor = change === undefined ? '' : isPositive ? 'text-emerald-600' : 'text-red-500'
+
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-1">{label}</p>
+    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-col gap-1">
+      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">{title}</p>
       <p className="text-2xl font-bold text-gray-900">{value}</p>
-      {change !== undefined && change !== null && (
-        <p className={`text-sm font-medium mt-1 ${change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-          {change >= 0 ? "+" : ""}{change}% {changeLabel}
+      {change !== undefined && (
+        <p className={`text-sm font-medium ${changeColor}`}>
+          {isPositive ? '▲' : '▼'} {Math.abs(change).toFixed(1)}%{' '}
+          <span className="text-gray-400 font-normal">{changeLabel}</span>
         </p>
       )}
-      {secondary && (
-        <div className="mt-2 pt-2 border-t border-gray-100">
-          <p className="text-sm text-gray-600">{secondary.value}</p>
-          {secondary.change !== null && (
-            <p className={`text-xs font-medium ${secondary.change >= 0 ? "text-emerald-600" : "text-red-500"}`}>
-              {secondary.change >= 0 ? "+" : ""}{secondary.change}% {secondary.label}
-            </p>
-          )}
-        </div>
-      )}
+      {subtitle && <p className="text-xs text-gray-400">{subtitle}</p>}
     </div>
-  );
+  )
 }

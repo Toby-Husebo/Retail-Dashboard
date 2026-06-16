@@ -1,50 +1,86 @@
-import KPICard from "@/components/KPICard";
-import RetailerTable from "@/components/RetailerTable";
-import SalesCharts from "@/components/SalesCharts";
-import { kpiData, dailyUnitSales, weeklyUnitSales } from "@/lib/mockData";
-import Link from "next/link";
+import KPICard from '@/components/KPICard'
+import SalesChart from '@/components/SalesChart'
+import RetailerTable from '@/components/RetailerTable'
+import {
+  retailers,
+  products,
+  productColors,
+  retailerColors,
+  weeklyUnitSalesByDay,
+  last52WeeksData,
+  kpiData,
+  getCurrentFiscalWeek,
+} from '@/lib/mockData'
 
 export default function DashboardPage() {
+  const fiscalWeek = getCurrentFiscalWeek()
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <span className="font-bold text-gray-900 text-lg">Retail Insights Hub</span>
-            <nav className="flex gap-1">
-              <Link href="/" className="px-3 py-1.5 rounded-md text-sm font-medium bg-teal-50 text-teal-700">
-                Dashboard
-              </Link>
-              <Link href="/weekly-report" className="px-3 py-1.5 rounded-md text-sm font-medium text-gray-600 hover:bg-gray-100 transition-colors">
-                Weekly Report
-              </Link>
-            </nav>
-          </div>
-          <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-            Jun 7 – 13, 2026
-          </span>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Retail Insights Hub</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Current period: {fiscalWeek}</p>
         </div>
-      </header>
+        <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-teal-50 text-teal-700 border border-teal-100">
+          Live Data
+        </span>
+      </div>
 
-      <main className="max-w-screen-2xl mx-auto px-6 py-8 space-y-6">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-          <KPICard
-            label="Total Sales"
-            value={`$${(kpiData.totalSales / 1000000).toFixed(1)}M`}
-            change={kpiData.totalSalesWoW}
-            changeLabel="WoW"
-            secondary={{ value: `+${kpiData.totalSalesYoY}% YoY`, change: kpiData.totalSalesYoY, label: "YoY" }}
-          />
-          <KPICard label="Unit Sales" value={kpiData.totalUnitSales.toLocaleString()} change={kpiData.totalUnitSalesWoW} changeLabel="WoW" />
-          <KPICard label="Target" value="$1.9M" change={-3.6} changeLabel="WoW" />
-          <KPICard label="Walmart" value="37,599 units" change={-0.6} changeLabel="WoW" />
-          <KPICard label="Ulta" value="24,953 units" change={-2.7} changeLabel="WoW" />
-        </div>
+      {/* KPI Cards */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <KPICard
+          title="Total Sales"
+          value={`$${(kpiData.totalSales / 1000000).toFixed(2)}M`}
+          change={kpiData.salesWoW}
+          changeLabel="WoW"
+        />
+        <KPICard
+          title="Sales WoW"
+          value={`${kpiData.salesWoW > 0 ? '+' : ''}${kpiData.salesWoW.toFixed(1)}%`}
+          subtitle="vs prior week"
+        />
+        <KPICard
+          title="Sales YoY"
+          value={`+${kpiData.salesYoY.toFixed(1)}%`}
+          subtitle="vs prior year"
+        />
+        <KPICard
+          title="Total Units"
+          value={kpiData.totalUnitSales.toLocaleString()}
+          change={kpiData.unitSalesWoW}
+          changeLabel="WoW"
+        />
+        <KPICard
+          title="Unit Sales WoW"
+          value={`${kpiData.unitSalesWoW > 0 ? '+' : ''}${kpiData.unitSalesWoW.toFixed(1)}%`}
+          subtitle="vs prior week"
+        />
+      </div>
 
-        <SalesCharts dailyData={dailyUnitSales} weeklyData={weeklyUnitSales} />
+      {/* Charts */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <SalesChart
+          title="Unit Sales Last Week (by Product)"
+          data={weeklyUnitSalesByDay}
+          keys={products}
+          colors={productColors}
+          xKey="day"
+          yLabel="Units"
+        />
+        <SalesChart
+          title="Unit Sales Last 52 Weeks (by Retailer)"
+          data={last52WeeksData}
+          keys={['Target', 'Walmart', 'Ulta', 'iHerb', 'Revolve', 'Meijer']}
+          colors={retailerColors}
+          xKey="week"
+          yLabel="Units"
+        />
+      </div>
 
-        <RetailerTable />
-      </main>
+      {/* Retailer Table */}
+      <RetailerTable data={retailers} />
     </div>
-  );
+  )
 }

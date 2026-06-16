@@ -1,44 +1,55 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from 'next/server'
 
-// Falls back to in-memory store when Upstash env vars are not set (dev only)
-const memoryStore: Record<string, { weekLabel: string; content: string; savedAt: string }> = {};
+interface ReportEntry {
+  week: string
+  content: string
+  savedAt: string
+}
 
-async function getRedis() {
-  if (process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN) {
-    const { Redis } = await import("@upstash/redis");
-    return new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    });
+async function getKV() {
+  try {
+    const { kv } = await import('@vercel/kv')
+    return kv
+  } catch {
+    return null
   }
-  return null;
 }
 
 export async function GET() {
-  const redis = await getRedis();
-
-  if (redis) {
-    const keys: string[] = await redis.keys("report:*");
-    const reports: Record<string, unknown> = {};
-    for (const key of keys) {
-      reports[key.replace("report:", "")] = await redis.get(key);
-    }
-    return NextResponse.json(reports);
+  const kv = await getKV()
+  if (!kv) {
+    return NextResponse.json({ reports: [], message: 'KV not configured' })
   }
 
-  return NextResponse.json(memoryStore);
+  try {
+    const keys = await kv.keys('report:*')
+    const reports: ReportEntry[] = []
+    for (const key of keys) {
+      const val = await kv.get<ReportEntry>(key)
+      if (val) reports.push(val)
+    }
+    reports.sort((a, b) => b.week.localeCompare(a.week))
+    return NextResponse.json({ reports })
+  } catch (error) {
+    console.error('KV error:', error)
+    return NextResponse.json({ reports: [] })
+  }
 }
 
-export async function POST(req: NextRequest) {
-  const { weekKey, weekLabel, content } = await req.json();
-  const record = { weekLabel, content, savedAt: new Date().toISOString() };
+export async function POST(request: Request) {
+  const { week, content } = await request.json()
 
-  const redis = await getRedis();
-  if (redis) {
-    await redis.set(`report:${weekKey}`, record);
-  } else {
-    memoryStore[weekKey] = record;
+  const kv = await getKV()
+  if (!kv) {
+    return NextResponse.json({ success: false, message: 'KV not configured' }, { status: 503 })
   }
 
-  return NextResponse.json({ success: true });
+  try {
+    const entry: ReportEntry = { week, content, savedAt: new Date().toISOString() }
+    await kv.set(`report:${week}`, entry)
+    return NextResponse.json({ success: true })
+  } catch (error) {
+    console.error('KV save error:', error)
+    return NextResponse.json({ success: false }, { status: 500 })
+  }
 }
