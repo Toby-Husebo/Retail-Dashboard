@@ -18,7 +18,7 @@ export const retailerColorMap: Record<string, string> = {
   Ulta: "#2C2C2C",
   iHerb: "#5BA617",
   Revolve: "#C8A951",
-  Meijer: "#E31837",
+  Meijer: "#7B3FA0",
 };
 
 export const retailerList = [
