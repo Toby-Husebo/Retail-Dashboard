@@ -186,7 +186,7 @@ export default function DashboardPage() {
           <KPICard
             key={r.name}
             title={r.name}
-            value={`$${(r.sales / 1_000).toFixed(0)}K`}
+            value={r.sales >= 1_000_000 ? `$${(r.sales / 1_000_000).toFixed(2)}M` : `$${(r.sales / 1_000).toFixed(0)}K`}
             change={r.salesChange}
             changeLabel="vs prior"
             subtitle={`${r.salesYoY > 0 ? '+' : ''}${r.salesYoY.toFixed(1)}% YoY`}
