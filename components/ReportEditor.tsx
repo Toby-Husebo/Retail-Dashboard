@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getFiscalWeeks } from '@/lib/mockData'
+import { getAvailablePeriods, getRetailerData, type RetailerRow } from '@/lib/periodData'
 
 interface SavedReport {
   week: string
@@ -10,8 +10,9 @@ interface SavedReport {
 }
 
 export default function ReportEditor() {
-  const weeks = getFiscalWeeks()
+  const weeks = getAvailablePeriods('week').map(p => p.label)
   const [selectedWeek, setSelectedWeek] = useState(weeks[0])
+  const [selectedOffset, setSelectedOffset] = useState(0)
   const [reportContent, setReportContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -30,7 +31,7 @@ export default function ReportEditor() {
         setSavedReports(data.reports || [])
       }
     } catch {
-      // KV not configured, ignore
+      // storage not configured, ignore
     }
   }
 
@@ -41,7 +42,7 @@ export default function ReportEditor() {
       const res = await fetch('/api/generate-report', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ week: selectedWeek }),
+        body: JSON.stringify({ week: selectedWeek, periodOffset: selectedOffset }),
       })
       const data = await res.json()
       if (data.report) {
@@ -91,25 +92,31 @@ export default function ReportEditor() {
 
   async function handleDownloadExcel() {
     const XLSX = await import('xlsx')
-    const { retailers } = await import('@/lib/mockData')
+    const retailers: RetailerRow[] = getRetailerData('week', selectedOffset, 'prior_period')
     const ws = XLSX.utils.json_to_sheet(
       retailers.map((r) => ({
         Retailer: r.name,
         'Sales ($)': r.sales,
-        'Sales WoW%': r.salesWoW,
-        'Sales YoY%': r.salesYoY,
+        'Sales vs Prior %': r.salesChange,
+        'Sales YoY %': r.salesYoY,
         'Unit Sales': r.unitSales,
-        'Unit Sales WoW%': r.unitSalesWoW,
-        'Unit Sales YoY%': r.unitSalesYoY,
-        'Avg Retail Price': r.avgRetailPrice,
+        'Units vs Prior %': r.unitSalesChange,
+        'Units YoY %': r.unitSalesYoY,
         'Weeks of Supply': r.weeksOfSupply,
+        'OOS %': r.oosPercent,
+        'Digital %': r.digitalPct,
         'Returns %': r.returnsRate,
-        'Scanning Locations': r.scanningLocations,
       }))
     )
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Weekly Data')
     XLSX.writeFile(wb, `retail-data-${selectedWeek.replace(/\s/g, '-')}.xlsx`)
+  }
+
+  function handleOutlookEmail() {
+    const subject = encodeURIComponent(`Lemme Retail Weekly Report — ${selectedWeek}`)
+    const body = encodeURIComponent(reportContent || 'Generate a report first, then use this button to open in Outlook.')
+    window.location.href = `mailto:?subject=${subject}&body=${body}`
   }
 
   function loadSavedReport(report: SavedReport) {
@@ -152,14 +159,16 @@ export default function ReportEditor() {
             <div>
               <label className="block text-xs font-medium text-gray-500 mb-1">Fiscal Week</label>
               <select
-                value={selectedWeek}
-                onChange={(e) => setSelectedWeek(e.target.value)}
+                value={selectedOffset}
+                onChange={(e) => {
+                  const offset = parseInt(e.target.value)
+                  setSelectedOffset(offset)
+                  setSelectedWeek(weeks[offset])
+                }}
                 className="border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-teal-500"
               >
-                {weeks.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
+                {weeks.map((w, i) => (
+                  <option key={w} value={i}>{w}</option>
                 ))}
               </select>
             </div>
@@ -191,6 +200,16 @@ export default function ReportEditor() {
                 className="px-4 py-2 border border-gray-200 hover:border-teal-400 text-gray-700 text-sm font-medium rounded-lg transition-colors"
               >
                 Download Excel
+              </button>
+              <button
+                onClick={handleOutlookEmail}
+                disabled={!reportContent}
+                className="px-4 py-2 border border-blue-200 hover:border-blue-400 text-blue-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-60 flex items-center gap-1.5"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/>
+                </svg>
+                Open in Outlook
               </button>
             </div>
           </div>

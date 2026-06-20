@@ -49,11 +49,10 @@ export default function RetailerTable({ data, compareLabel }: Props) {
               <th className="px-4 py-3 text-right font-medium">Units</th>
               <th className="px-4 py-3 text-right font-medium">Units Chg</th>
               <th className="px-4 py-3 text-right font-medium">Units YoY</th>
-              <th className="px-4 py-3 text-right font-medium">UPSS</th>
-              <th className="px-4 py-3 text-right font-medium">Avg $</th>
               <th className="px-4 py-3 text-right font-medium">WoS</th>
+              <th className="px-4 py-3 text-right font-medium">OOS %</th>
+              <th className="px-4 py-3 text-right font-medium">Digital %</th>
               <th className="px-4 py-3 text-right font-medium">Returns</th>
-              <th className="px-4 py-3 text-right font-medium">Locations</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-50">
@@ -76,17 +75,16 @@ export default function RetailerTable({ data, compareLabel }: Props) {
                 <td className="px-4 py-3 text-right text-gray-700">{row.unitSales.toLocaleString()}</td>
                 <td className="px-4 py-3 text-right"><Pct val={row.unitSalesChange} /></td>
                 <td className="px-4 py-3 text-right"><Pct val={row.unitSalesYoY} /></td>
-                <td className="px-4 py-3 text-right text-gray-600 text-xs">
-                  {row.upss !== null ? row.upss.toFixed(2) : <span className="text-gray-300">—</span>}
-                </td>
-                <td className="px-4 py-3 text-right text-gray-600">${row.avgRetailPrice.toFixed(2)}</td>
                 <td className={`px-4 py-3 text-right font-medium ${row.weeksOfSupply < 4 ? 'text-red-600' : row.weeksOfSupply < 6 ? 'text-amber-600' : 'text-gray-600'}`}>
                   {row.weeksOfSupply.toFixed(1)}
                 </td>
-                <td className="px-4 py-3 text-right text-gray-600">{row.returnsRate.toFixed(1)}%</td>
-                <td className="px-4 py-3 text-right text-gray-600">
-                  {row.scanningLocations > 0 ? row.scanningLocations.toLocaleString() : '—'}
+                <td className={`px-4 py-3 text-right text-xs font-medium ${row.oosPercent > 5 ? 'text-red-600' : row.oosPercent > 2 ? 'text-amber-600' : 'text-gray-500'}`}>
+                  {row.oosPercent.toFixed(1)}%
                 </td>
+                <td className="px-4 py-3 text-right text-gray-600 text-xs">
+                  {row.digitalPct.toFixed(1)}%
+                </td>
+                <td className="px-4 py-3 text-right text-gray-600">{row.returnsRate.toFixed(1)}%</td>
               </tr>
             ))}
           </tbody>
@@ -96,7 +94,7 @@ export default function RetailerTable({ data, compareLabel }: Props) {
               <td className="px-4 py-3 text-right text-gray-900">{fmt(totals.sales)}</td>
               <td colSpan={2} />
               <td className="px-4 py-3 text-right text-gray-900">{totals.units.toLocaleString()}</td>
-              <td colSpan={7} />
+              <td colSpan={6} />
             </tr>
           </tfoot>
         </table>
