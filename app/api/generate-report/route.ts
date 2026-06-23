@@ -1,58 +1,78 @@
 import { NextResponse } from 'next/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { getRetailerData, getKPIData, type RetailerRow } from '@/lib/periodData'
+
+function fmtSales(n: number) {
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`
+  if (n >= 100_000) return `$${(n / 1_000_000).toFixed(3)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(1)}K`
+  return `$${n}`
+}
+
+function pct(val: number) {
+  return `${val >= 0 ? '+' : ''}${val.toFixed(1)}%`
+}
+
+function buildRetailerSection(row: RetailerRow): string {
+  let section = `${row.name}\n`
+  section += `${fmtSales(row.sales)} (${pct(row.salesChange)} vs prior, ${pct(row.salesYoY)} YoY) · ${row.unitSales.toLocaleString()} units\n`
+
+  // Department breakdown
+  if (row.departments) {
+    for (const [dept, d] of Object.entries(row.departments)) {
+      section += `  • ${dept}: ${fmtSales(d.sales)} (${pct(d.salesChange)} vs prior) · ${d.units.toLocaleString()} units\n`
+    }
+  }
+  return section
+}
 
 export async function POST(request: Request) {
   const body = await request.json()
-  const { week } = body
+  const { week, periodOffset = 0 } = body
+
+  // Build live data snapshot
+  const rows = getRetailerData('week', periodOffset, 'prior_period')
+  const kpi = getKPIData('week', periodOffset, 'prior_period')
+
+  const dataBlock = rows.map(buildRetailerSection).join('\n')
+
+  const prompt = `You are writing a weekly retail sales performance summary for the Lemme brand (health/wellness gummy supplements).
+
+Write a professional email-style narrative for ${week || kpi.periodLabel}.
+
+LIVE DATA:
+Total Sales: ${fmtSales(kpi.totalSales)} (${pct(kpi.salesChange)} vs prior period, ${pct(kpi.salesYoY)} YoY)
+Total Units: ${kpi.totalUnits.toLocaleString()} (${pct(kpi.unitsChange)} vs prior)
+
+Retailer breakdown (with department sub-breakouts where available):
+${dataBlock}
+
+FORMAT YOUR RESPONSE EXACTLY LIKE THIS:
+
+Hi all,
+
+Below is a summary of this week's retail sales performance (${week || kpi.periodLabel}), with key highlights and drivers by retailer.
+
+Lemme at Retail
+${fmtSales(kpi.totalSales)} (${pct(kpi.salesChange)} WoW, ${pct(kpi.salesYoY)} YoY)
+
+[For each retailer, write 2–3 sentences about WoW performance and key trends. For Target, include separate callouts for Target Beauty and Target Healthcare. For Walmart, include separate callouts for Walmart Digestive and Walmart VMS. Be specific about which SKUs or departments are driving results.]
+
+Thank you
+
+Keep the tone professional and data-driven. Highlight wins, flag concerns, and note any standout department or SKU trends.`
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
-    return NextResponse.json(
-      { error: 'ANTHROPIC_API_KEY not configured', report: getSampleReport(week) },
-      { status: 200 }
-    )
+    return NextResponse.json({ report: getSampleReport(week || kpi.periodLabel, rows, kpi) })
   }
 
   const client = new Anthropic({ apiKey })
 
-  const prompt = `You are writing a weekly retail sales performance summary for the Lemme brand (health/wellness gummy supplements). 
-
-Write a professional email-style narrative for ${week} using this data:
-
-Total Sales: $3.75M (+1.4% WoW, +50% YoY)
-Total Units: 130,954 (+1.1% WoW)
-
-Retailer breakdown:
-- Target: $1.9M (+2.3% WoW, +45.2% YoY), 52,341 units
-- Walmart: $1.36M (-1.2% WoW, +210.5% YoY), 37,599 units  
-- Ulta: $905K (+3.7% WoW, +28.4% YoY), 24,953 units
-- iHerb: $235K (+5.2% WoW, +67.8% YoY), 6,490 units
-- Revolve: $148K (-3.4% WoW, +15.6% YoY), 4,103 units
-- Meijer: $198K (+0.8% WoW, +89.4% YoY), 5,468 units
-
-Products: Purr Gummies, Debloat Gummies, Sleep Gummies, Burn Gummies, Play Gummies, Tone Gummies, Glow Gummies
-
-Write in this style:
-Hi all,
-
-Below is a summary of last week's retail sales performance, with key highlights and drivers by retailer. Overall, the business [summary sentence].
-
-Lemme at Retail
-$[total] ([WoW]% WoW, +[YoY]% YoY)
-
-[Retailer name]
-[Key insight about WoW performance and any notable drivers]
-
-[Continue for each retailer...]
-
-Thank you
-
-Keep it concise, professional, and highlight the most important trends. 2-3 sentences max per retailer.`
-
   try {
     const message = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 1024,
+      max_tokens: 1500,
       messages: [{ role: 'user', content: prompt }],
     })
 
@@ -60,35 +80,34 @@ Keep it concise, professional, and highlight the most important trends. 2-3 sent
     return NextResponse.json({ report })
   } catch (error) {
     console.error('Claude API error:', error)
-    return NextResponse.json({ report: getSampleReport(week) })
+    return NextResponse.json({ report: getSampleReport(week || kpi.periodLabel, rows, kpi) })
   }
 }
 
-function getSampleReport(week: string) {
+function getSampleReport(week: string, rows: RetailerRow[], kpi: { totalSales: number; salesChange: number; salesYoY: number; totalUnits: number; unitsChange: number }) {
+  const target = rows.find(r => r.name === 'Target')
+  const walmart = rows.find(r => r.name === 'Walmart')
+  const ulta = rows.find(r => r.name === 'Ulta')
+
   return `Hi all,
 
-Below is a summary of last week's retail sales performance (${week}), with key highlights and drivers by retailer. Overall, the business increased slightly WoW, driven by growth at Ulta, iHerb, and Target.
+Below is a summary of this week's retail sales performance (${week}), with key highlights and drivers by retailer.
 
 Lemme at Retail
-$3.75M (+1.4% WoW, +50% YoY)
+${fmtSales(kpi.totalSales)} (${pct(kpi.salesChange)} WoW, ${pct(kpi.salesYoY)} YoY)
 
 Target
-+2.3% WoW — solid performance across both Beauty and Healthcare categories. Strong velocity on Purr and Debloat Gummies continues to drive results.
+${target ? `${fmtSales(target.sales)} (${pct(target.salesChange)} WoW, ${pct(target.salesYoY)} YoY) across ${target.unitSales.toLocaleString()} units.` : ''}
+${target?.departments?.['Beauty'] ? `  • Target Beauty: ${fmtSales(target.departments['Beauty'].sales)} (${pct(target.departments['Beauty'].salesChange)} WoW) — strong velocity on Purr and Glow Gummies.` : ''}
+${target?.departments?.['Healthcare'] ? `  • Target Healthcare: ${fmtSales(target.departments['Healthcare'].sales)} (${pct(target.departments['Healthcare'].salesChange)} WoW) — Debloat and Sleep continue to perform.` : ''}
 
 Walmart
--1.2% WoW — slight pullback following strong prior weeks. YoY performance remains exceptional at +210%, reflecting the brand's rapid expansion in mass retail.
+${walmart ? `${fmtSales(walmart.sales)} (${pct(walmart.salesChange)} WoW, ${pct(walmart.salesYoY)} YoY) across ${walmart.unitSales.toLocaleString()} units.` : ''}
+${walmart?.departments?.['Digestive'] ? `  • Walmart Digestive: ${fmtSales(walmart.departments['Digestive'].sales)} (${pct(walmart.departments['Digestive'].salesChange)} WoW).` : ''}
+${walmart?.departments?.['VMS'] ? `  • Walmart VMS: ${fmtSales(walmart.departments['VMS'].sales)} (${pct(walmart.departments['VMS'].salesChange)} WoW) — Tone and Play Gummies driving growth.` : ''}
 
 Ulta
-+3.7% WoW — continued momentum in beauty channel. Sleep and Glow Gummies performing well with the core Ulta customer.
-
-iHerb
-+5.2% WoW — strongest WoW growth this week, driven by international demand and strong search visibility for wellness products.
-
-Revolve
--3.4% WoW — softness in fashion-adjacent channel; seasonal normalization after recent promotional period.
-
-Meijer
-+0.8% WoW — stable performance in Midwest regional. Distribution build still underway across 258 scanning locations.
+${ulta ? `${fmtSales(ulta.sales)} (${pct(ulta.salesChange)} WoW, ${pct(ulta.salesYoY)} YoY) — continued momentum in the beauty channel.` : ''}
 
 Thank you`
 }

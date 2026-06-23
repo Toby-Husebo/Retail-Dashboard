@@ -90,7 +90,7 @@ export default function DashboardPage() {
     : retailerList
 
   return (
-    <div className="space-y-5" ref={dashboardRef}>
+    <div className="space-y-5" id="dashboard-root" ref={dashboardRef}>
       {/* Header */}
       <div>
         <div className="flex items-center justify-between flex-wrap gap-2">

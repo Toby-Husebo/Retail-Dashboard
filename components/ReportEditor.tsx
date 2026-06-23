@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { getAvailablePeriods, getRetailerData, type RetailerRow } from '@/lib/periodData'
 
 interface SavedReport {
@@ -11,11 +11,12 @@ interface SavedReport {
 
 export default function ReportEditor() {
   const weeks = getAvailablePeriods('week').map(p => p.label)
-  const [selectedWeek, setSelectedWeek] = useState(weeks[0])
   const [selectedOffset, setSelectedOffset] = useState(0)
+  const [selectedWeek, setSelectedWeek] = useState(weeks[0])
   const [reportContent, setReportContent] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
   const [savedReports, setSavedReports] = useState<SavedReport[]>([])
   const [statusMsg, setStatusMsg] = useState('')
 
@@ -31,7 +32,7 @@ export default function ReportEditor() {
         setSavedReports(data.reports || [])
       }
     } catch {
-      // storage not configured, ignore
+      // storage not configured
     }
   }
 
@@ -80,22 +81,71 @@ export default function ReportEditor() {
   }
 
   async function handleDownloadPDF() {
-    const { jsPDF } = await import('jspdf')
-    const doc = new jsPDF()
-    doc.setFontSize(16)
-    doc.text(`Weekly Report — ${selectedWeek}`, 20, 20)
-    doc.setFontSize(11)
-    const lines = doc.splitTextToSize(reportContent, 170)
-    doc.text(lines, 20, 35)
-    doc.save(`retail-report-${selectedWeek.replace(/\s/g, '-')}.pdf`)
+    if (!reportContent) return
+    setIsExporting(true)
+    setStatusMsg('Capturing dashboard screenshot…')
+    try {
+      const { jsPDF } = await import('jspdf')
+      const doc = new jsPDF({ unit: 'mm', format: 'a4' })
+
+      // Header
+      doc.setFontSize(18)
+      doc.setTextColor(15, 118, 110) // teal-700
+      doc.text('Lemme Retail Weekly Report', 20, 20)
+      doc.setFontSize(11)
+      doc.setTextColor(100, 116, 139) // slate-500
+      doc.text(selectedWeek, 20, 28)
+
+      // Report text
+      doc.setFontSize(10)
+      doc.setTextColor(30, 41, 59) // slate-800
+      const lines = doc.splitTextToSize(reportContent, 170)
+      let y = 38
+      for (const line of lines) {
+        if (y > 260) {
+          doc.addPage()
+          y = 20
+        }
+        doc.text(line, 20, y)
+        y += 5
+      }
+
+      // Dashboard screenshot
+      try {
+        const html2canvas = (await import('html2canvas')).default
+        const dashEl = window.document.getElementById('dashboard-root')
+        if (dashEl) {
+          setStatusMsg('Rendering dashboard…')
+          const canvas = await html2canvas(dashEl, { scale: 1, useCORS: true, backgroundColor: '#f8fafc' })
+          const imgData = canvas.toDataURL('image/jpeg', 0.85)
+          doc.addPage()
+          doc.setFontSize(11)
+          doc.setTextColor(100, 116, 139)
+          doc.text('Dashboard Snapshot', 20, 15)
+          const imgWidth = 170
+          const imgHeight = (canvas.height / canvas.width) * imgWidth
+          doc.addImage(imgData, 'JPEG', 20, 20, imgWidth, Math.min(imgHeight, 250))
+        }
+      } catch {
+        // screenshot failed — skip it silently
+      }
+
+      doc.save(`retail-report-${selectedWeek.replace(/[\s·/]/g, '-')}.pdf`)
+      setStatusMsg('')
+    } catch (e) {
+      setStatusMsg('PDF export failed.')
+    } finally {
+      setIsExporting(false)
+    }
   }
 
   async function handleDownloadExcel() {
     const XLSX = await import('xlsx')
     const retailers: RetailerRow[] = getRetailerData('week', selectedOffset, 'prior_period')
-    const ws = XLSX.utils.json_to_sheet(
-      retailers.map((r) => ({
+    const rows = retailers.flatMap(r => {
+      const base = [{
         Retailer: r.name,
+        Department: 'Total',
         'Sales ($)': r.sales,
         'Sales vs Prior %': r.salesChange,
         'Sales YoY %': r.salesYoY,
@@ -106,16 +156,36 @@ export default function ReportEditor() {
         'OOS %': r.oosPercent,
         'Digital %': r.digitalPct,
         'Returns %': r.returnsRate,
-      }))
-    )
+      }]
+      if (r.departments) {
+        for (const [dept, d] of Object.entries(r.departments)) {
+          base.push({
+            Retailer: r.name,
+            Department: dept,
+            'Sales ($)': d.sales,
+            'Sales vs Prior %': d.salesChange,
+            'Sales YoY %': 0,
+            'Unit Sales': d.units,
+            'Units vs Prior %': d.unitsChange,
+            'Units YoY %': 0,
+            'Weeks of Supply': r.weeksOfSupply,
+            'OOS %': r.oosPercent,
+            'Digital %': r.digitalPct,
+            'Returns %': r.returnsRate,
+          })
+        }
+      }
+      return base
+    })
+    const ws = XLSX.utils.json_to_sheet(rows)
     const wb = XLSX.utils.book_new()
     XLSX.utils.book_append_sheet(wb, ws, 'Weekly Data')
-    XLSX.writeFile(wb, `retail-data-${selectedWeek.replace(/\s/g, '-')}.xlsx`)
+    XLSX.writeFile(wb, `retail-data-${selectedWeek.replace(/[\s·/]/g, '-')}.xlsx`)
   }
 
   function handleOutlookEmail() {
     const subject = encodeURIComponent(`Lemme Retail Weekly Report — ${selectedWeek}`)
-    const body = encodeURIComponent(reportContent || 'Generate a report first, then use this button to open in Outlook.')
+    const body = encodeURIComponent(reportContent || '(Generate report first, then use this button.)')
     window.location.href = `mailto:?subject=${subject}&body=${body}`
   }
 
@@ -179,21 +249,21 @@ export default function ReportEditor() {
                 disabled={isGenerating}
                 className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
               >
-                {isGenerating ? 'Generating...' : 'Generate Report'}
+                {isGenerating ? 'Generating…' : 'Generate Report'}
               </button>
               <button
                 onClick={handleSave}
                 disabled={isSaving || !reportContent}
                 className="px-4 py-2 bg-gray-800 hover:bg-gray-900 text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
               >
-                {isSaving ? 'Saving...' : 'Save'}
+                {isSaving ? 'Saving…' : 'Save'}
               </button>
               <button
                 onClick={handleDownloadPDF}
-                disabled={!reportContent}
+                disabled={!reportContent || isExporting}
                 className="px-4 py-2 border border-gray-200 hover:border-teal-400 text-gray-700 text-sm font-medium rounded-lg transition-colors disabled:opacity-60"
               >
-                Download PDF
+                {isExporting ? 'Exporting…' : 'Download PDF'}
               </button>
               <button
                 onClick={handleDownloadExcel}
@@ -214,7 +284,7 @@ export default function ReportEditor() {
             </div>
           </div>
           {statusMsg && (
-            <p className={`mt-2 text-sm ${statusMsg.includes('saved') || statusMsg.includes('Saved') ? 'text-emerald-600' : 'text-red-500'}`}>
+            <p className={`mt-2 text-sm ${statusMsg.includes('saved') || statusMsg.includes('Saved') ? 'text-emerald-600' : statusMsg.includes('Captur') || statusMsg.includes('Render') ? 'text-teal-600' : 'text-red-500'}`}>
               {statusMsg}
             </p>
           )}
@@ -228,9 +298,12 @@ export default function ReportEditor() {
           <textarea
             value={reportContent}
             onChange={(e) => setReportContent(e.target.value)}
-            placeholder="Click 'Generate Report' to create an AI-drafted narrative, or type your own..."
+            placeholder="Click 'Generate Report' to create an AI-drafted narrative with department callouts, or type your own…"
             className="w-full h-[calc(100vh-360px)] min-h-[300px] text-sm text-gray-700 border border-gray-200 rounded-lg p-3 resize-none focus:outline-none focus:ring-2 focus:ring-teal-500"
           />
+          <p className="text-xs text-gray-400 mt-2">
+            The PDF download includes a dashboard snapshot. "Open in Outlook" pre-fills an email with the report text.
+          </p>
         </div>
       </div>
     </div>
